@@ -1,0 +1,4 @@
+set(CMAKE_C_FLAGS_DEBUG "$ENV{CXXFLAGS} -O0 -std=c11 -Wall -g -D__DEBUG__")
+set(CMAKE_C_FLAGS_RELEASE "$ENV{CXXFLAGS} -O2 -std=c11")
+aux_source_directory("." LOADERS_SRCS)
+add_library("loaders" ${LOADERS_SRCS})
