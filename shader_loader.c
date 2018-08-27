@@ -21,7 +21,12 @@ GLuint make_shader(GLenum type, const char *const shader_src)
 	    GLint info_len = 0;
 	    glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &info_len);
 	    if (info_len) {
-		char *info = (char *)malloc(info_len * sizeof(char));
+		char *info = (char *)malloc(info_len * sizeof(*info));
+		if (!info) {
+			fprintf(stderr, "Malloc Error.\n");
+			glDeleteShader(shader);
+			return 0;
+		}
 		glGetShaderInfoLog(shader, info_len, NULL, info);
 		fprintf(stderr, "Compile Error: %s\n", info);
 		free(info);
@@ -44,18 +49,20 @@ GLuint load_shader(GLenum type, const char *const shader_path)
 	size_t file_length = 0;
 	char *file_content = NULL;
 	char temp_line[LINE_LENGTH];
-	if ((fp = fopen(shader_path, "r")) == NULL) {
+	if (!(fp = fopen(shader_path, "r"))) {
 		fprintf(stderr, "Open file %s failed.\n", shader_path);
 		return 0;
 	}
 	fseek(fp, 0l, SEEK_END);
 	file_length = ftell(fp);
 	rewind(fp);
-	file_content = (char *)malloc(file_length);
-	if (file_content == NULL)
+	if (!(file_content = (char *)malloc(file_length))) {
+		fprintf(stderr, "Malloc Error.\n");
+		fclose(fp);
 		return 0;
+	}
 	file_content[0] = '\0';
-	while (fgets(temp_line, LINE_LENGTH, fp) != NULL)
+	while (fgets(temp_line, LINE_LENGTH, fp))
 		strncat(file_content, temp_line, LINE_LENGTH);
 	fclose(fp);
 	result = make_shader(type, file_content);

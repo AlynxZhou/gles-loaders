@@ -13,8 +13,7 @@ GLuint load_program(const char *const vshader_path, const char *const fshader_pa
 	fshader = load_shader(GL_FRAGMENT_SHADER, fshader_path);
 	if (!vshader || !fshader)
 		return 0;
-	program = glCreateProgram();
-	if (!program) {
+	if (!(program = glCreateProgram())) {
 		fprintf(stderr, "Program Create Error.\n");
 		return 0;
 	}
@@ -28,7 +27,12 @@ GLuint load_program(const char *const vshader_path, const char *const fshader_pa
 		GLint info_len = 0;
 		glGetProgramiv(program, GL_INFO_LOG_LENGTH, &info_len);
 		if (info_len) {
-			char *info = (char *)malloc(info_len * sizeof(char));
+			char *info = (char *)malloc(info_len * sizeof(*info));
+			if (!info) {
+				fprintf(stderr, "Malloc Error.\n");
+				glDeleteProgram(program);
+				return 0;
+			}
 			glGetProgramInfoLog(program, info_len, NULL, info);
 			fprintf(stderr, "Link Error: %s\n", info);
 			free(info);
