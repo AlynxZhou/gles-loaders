@@ -1,5 +1,6 @@
 #include <png.h>
 #include <stdio.h>
+#include <stddef.h>
 #include <stdlib.h>
 #include <GLES3/gl3.h>
 
@@ -18,26 +19,25 @@ GLuint load_png_texture(const char *const png_path)
 	int pos = 0;
 	GLubyte *rgba = NULL;
 	FILE *fp = NULL;
-	if ((fp = fopen(png_path, "rb")) == NULL) {
-		fprintf(stderr, "Open Error: Cannot find %s.", png_path);
+	if (!(fp = fopen(png_path, "rb"))) {
+		fprintf(stderr, "Open Error: Cannot find %s.\n", png_path);
 		return 0;
 	}
 	fread(header, 1, sizeof(header), fp);
 	if (png_sig_cmp(header, 0, 8)) {
-		fprintf(stderr, "Format Error: Not a valid PNG file.");
+		fprintf(stderr, "Format Error: Not a valid PNG file.\n");
 		fclose(fp);
 		return 0;
 	}
 	// 后三个是绑定错误以及警告的回调函数，这里设置为空。
 	png_ptr = png_create_read_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
-	if (png_ptr == NULL) {
-		fprintf(stderr, "Create Struct Error.");
+	if (!png_ptr) {
+		fprintf(stderr, "Create Struct Error.\n");
 		fclose(fp);
 		return 0;
 	}
 	info_ptr = png_create_info_struct(png_ptr);
-	if (info_ptr == NULL) {
-		// 初始化失败以后销毁png_struct。
+	if (!info_ptr) {
 		png_destroy_read_struct(&png_ptr, (png_info **)NULL, (png_info **)NULL);
 		fclose(fp);
 		return 0;
@@ -58,16 +58,23 @@ GLuint load_png_texture(const char *const png_path)
 	// bit_depth = png_get_bit_depth(png_ptr, info_ptr);
 	// number_of_passes = png_set_interlace_handling(png_ptr);
 	png_read_update_info(png_ptr, info_ptr);
-	if (setjmp(png_jmpbuf(png_ptr))) {
+	row_ptrs = (png_byte **)malloc(sizeof(png_byte *) * height);
+	if (!row_ptrs) {
+		fprintf(stderr, "Malloc Error.\n");
 		png_destroy_read_struct(&png_ptr, &info_ptr, (png_info **)NULL);
 		fclose(fp);
 		return 0;
 	}
 	rgba = (GLubyte *)malloc(width * height * 4);
-	row_ptrs = (png_byte **)malloc(sizeof(png_byte *) * height);
-	for (int i = 0; i < height; ++i)
+	if (!rgba) {
+		fprintf(stderr, "Malloc Error.\n");
+		png_destroy_read_struct(&png_ptr, &info_ptr, (png_info **)NULL);
+		fclose(fp);
+		return 0;
+	}
+	for (size_t i = 0; i < height; ++i)
 	        row_ptrs[i] = NULL;
-	for (int i = 0; i < height; ++i)
+	for (size_t i = 0; i < height; ++i)
 		row_ptrs[i] = (png_byte *)png_malloc(png_ptr, png_get_rowbytes(png_ptr, info_ptr));
 	png_read_image(png_ptr, row_ptrs);
 	pos = width * height * 4 - 4 * width;
@@ -92,12 +99,12 @@ GLuint load_png_texture(const char *const png_path)
 	glGenerateMipmap(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, 0);
 	png_destroy_read_struct(&png_ptr, &info_ptr, (png_info **)NULL);
-	for (int i = 0; i < height; ++i)
-		if (row_ptrs[i] != NULL)
+	for (size_t i = 0; i < height; ++i)
+		if (row_ptrs[i])
 			png_free(png_ptr, row_ptrs[i]);
-	if (row_ptrs != NULL)
+	if (row_ptrs)
 		free(row_ptrs);
-	if (rgba != NULL)
+	if (rgba)
 		free(rgba);
 	return texture;
 }
