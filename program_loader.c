@@ -27,7 +27,7 @@ GLuint load_program(const char *const vshader_path, const char *const fshader_pa
 		GLint info_len = 0;
 		glGetProgramiv(program, GL_INFO_LOG_LENGTH, &info_len);
 		if (info_len) {
-			char *info = (char *)malloc(info_len * sizeof(*info));
+			char *info = malloc(info_len * sizeof(*info));
 			if (!info) {
 				fprintf(stderr, "Malloc Error.\n");
 				glDeleteProgram(program);
