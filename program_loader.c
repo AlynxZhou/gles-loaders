@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <GLES3/gl3.h>
-#include "shader_loader.h"
+#include "loaders/shader_loader.h"
 
 GLuint load_program(const char *const vshader_path, const char *const fshader_path)
 {

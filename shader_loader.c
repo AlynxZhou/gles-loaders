@@ -10,28 +10,28 @@ GLuint make_shader(GLenum type, const char *const shader_src)
 	GLuint shader = 0;
 	GLint compiled = 0;
 	if (!(shader = glCreateShader(type))) {
-	    fprintf(stderr, "Shader Create Error.\n");
-	    return 0;
+		fprintf(stderr, "Shader Create Error.\n");
+		return 0;
 	}
 	glShaderSource(shader, 1, &shader_src, NULL);
 	glCompileShader(shader);
 	glGetShaderiv(shader, GL_COMPILE_STATUS, &compiled);
 	if (!compiled) {
-	    GLint info_len = 0;
-	    glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &info_len);
-	    if (info_len) {
-		char *info = malloc(info_len * sizeof(*info));
-		if (!info) {
-			fprintf(stderr, "Malloc Error.\n");
-			glDeleteShader(shader);
-			return 0;
+		GLint info_len = 0;
+		glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &info_len);
+		if (info_len) {
+			char *info = malloc(info_len * sizeof(*info));
+			if (!info) {
+				fprintf(stderr, "Malloc Error.\n");
+				glDeleteShader(shader);
+				return 0;
+			}
+			glGetShaderInfoLog(shader, info_len, NULL, info);
+			fprintf(stderr, "Compile Error: %s\n", info);
+			free(info);
 		}
-		glGetShaderInfoLog(shader, info_len, NULL, info);
-		fprintf(stderr, "Compile Error: %s\n", info);
-		free(info);
-	    }
-	    glDeleteShader(shader);
-	    return 0;
+		glDeleteShader(shader);
+		return 0;
 	}
 	return shader;
 }
@@ -48,15 +48,17 @@ GLuint load_shader(GLenum type, const char *const shader_path)
 	size_t file_length = 0;
 	char *file_content = NULL;
 	char temp_line[LINE_LENGTH];
-	if (!(fp = fopen(shader_path, "r"))) {
+	fp = fopen(shader_path, "r");
+	if (fp == NULL) {
 		fprintf(stderr, "Open file %s failed.\n", shader_path);
 		return 0;
 	}
 	fseek(fp, 0l, SEEK_END);
-	file_length = ftell(fp);
+	file_length = ftell(fp) + 1;
 	rewind(fp);
-	if (!(file_content = malloc(file_length))) {
-		fprintf(stderr, "Malloc Error.\n");
+	file_content = malloc(file_length * sizeof(*file_content));
+	if (fp == NULL) {
+		fprintf(stderr, "Malloc failed.\n");
 		fclose(fp);
 		return 0;
 	}
