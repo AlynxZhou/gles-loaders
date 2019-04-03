@@ -57,7 +57,7 @@ GLuint load_shader(GLenum type, const char *const shader_path)
 	file_length = ftell(fp) + 1;
 	rewind(fp);
 	file_content = malloc(file_length * sizeof(*file_content));
-	if (fp == NULL) {
+	if (file_content == NULL) {
 		fprintf(stderr, "Malloc failed.\n");
 		fclose(fp);
 		return 0;
